@@ -16,6 +16,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private var mBrushSize: Float = 0.toFloat()
     private var color = Color.BLACK
     private var canvas: Canvas? = null
+    private val mPaths = ArrayList<CustomPath>()
 
     init {
         setUpDrawing()
@@ -31,24 +32,27 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         mCanvasPaint = Paint(Paint.DITHER_FLAG)
         mBrushSize = 20.toFloat()
     }
-
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         mCanvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         canvas = Canvas(mCanvasBitmap!!) //Because of null use !!
     }
-
     // Change Canvas to Canvas? if fails
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawBitmap(mCanvasBitmap!!, 0f, 0f, mCanvasPaint)
+        // Able to not clear drawing when not touching screen
+        for(path in mPaths){
+            mDrawPaint!!.strokeWidth = path.brushThickness
+            mDrawPath!!.color = path.color
+            canvas.drawPath(path, mDrawPaint!!)
+        }
         if (!mDrawPath!!.isEmpty) {
             mDrawPaint!!.strokeWidth = mDrawPath!!.brushThickness
             mDrawPath!!.color = mDrawPath!!.color
             canvas.drawPath(mDrawPath!!, mDrawPaint!!)
         }
     }
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         val touchX = event?.x
@@ -74,6 +78,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                 }
             }
             MotionEvent.ACTION_UP -> {
+                mPaths.add(mDrawPath!!)
                 mDrawPath = CustomPath(color, mBrushSize)
             }
             else -> return false
@@ -81,9 +86,7 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         invalidate()
         return true
     }
-
     internal inner class CustomPath(var color: Int, var brushThickness: Float) : Path() {
-
     }
 
 
